@@ -1,4 +1,5 @@
 ﻿#define CRT_SECURE_NO_WARNINGS
+#define _WINSOCK_DEPRECATED_NO_WARNINGS
 
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
@@ -13,14 +14,14 @@ using namespace std;
 
 #pragma comment(lib, "WS2_32.lib")
 
-#define DEFAULT_PORT			"27015"
+#define DEFAULT_ADDR			"127.0.0.1"
+#define DEFAULT_PORT			27015
 #define DEFAULT_BUFFER_LENGTH	1500
 
 void main()
 {
 	setlocale(LC_ALL, "");
 
-	// Инициализация WinSock
 	WSAData wsaData;
 	
 	int iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
@@ -30,58 +31,38 @@ void main()
 		return;
 	}
 
-	// Проверка заянятости порта, на котором нужно запустить сервер
-	addrinfo hints;
-	ZeroMemory(&hints, sizeof(hints));
-	hints.ai_family = AF_INET;	// TCP/IPv4
-	hints.ai_socktype = SOCK_STREAM;
-	hints.ai_protocol = IPPROTO_TCP;
-	hints.ai_flags = AI_PASSIVE;
-
-	addrinfo* result = NULL;
-	iResult = getaddrinfo(NULL, DEFAULT_PORT, &hints, &result);
-	if (iResult != 0)
-	{
-		WSACleanup();
-		cout << "Error: getaddrinfo failed: " << iResult << endl;
-		return;
-	}
-	cout << hints.ai_addr << endl;
-
-	// Создание Сокета, который будет прослушивать Сервер
-	SOCKET ListenSocket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
+	SOCKET ListenSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	if (ListenSocket == INVALID_SOCKET)
 	{
 		cout << "Error: Socket creation failed: " << WSAGetLastError() << endl;
-		freeaddrinfo(result);
 		WSACleanup();
 		return;
 	}
 
-	// Связка Сокета с сетевой картой, которую он будет прослушивать
-	//strcpy(result->ai_addr->sa_data,"127.0.0.1");
-	iResult = bind(ListenSocket, result->ai_addr, result->ai_addrlen);
+	//https://learn.microsoft.com/en-us/windows/win32/api/winsock2/nf-winsock2-listen
+	sockaddr_in service;
+	service.sin_family = AF_INET;
+	service.sin_addr.s_addr = inet_addr(DEFAULT_ADDR);
+	service.sin_port = htons(DEFAULT_PORT);
+
+	iResult = bind(ListenSocket, (SOCKADDR*)&service, sizeof(service));
 	if (iResult == SOCKET_ERROR)
 	{
 		cout << "Error: bind failed with code " << WSAGetLastError() << endl;
 		closesocket(ListenSocket);
-		freeaddrinfo(result);
 		WSACleanup();
 		return;
 	}
 
-	// Запуск Сокета
 	iResult = listen(ListenSocket, SOMAXCONN);
 	if (iResult == SOCKET_ERROR)
 	{
 		cout << "Error: Listen failed with code " << WSAGetLastError() << endl;
 		closesocket(ListenSocket);
-		freeaddrinfo(result);
 		WSACleanup();
 		return;
 	}
 
-	// Зацикливание Сокета на получение соединений от клиентов
 	CHAR recvbuffer[DEFAULT_BUFFER_LENGTH] = {};
 	int recv_buffer_length = DEFAULT_BUFFER_LENGTH;
 	SOCKET ClientSocket = accept(ListenSocket, NULL, NULL);
@@ -99,7 +80,6 @@ void main()
 				cout << "Error: Send failed with code " << WSAGetLastError() << endl;
 				closesocket(ClientSocket);
 				closesocket(ListenSocket);
-				freeaddrinfo(result);
 				WSACleanup();
 				return;
 			}
@@ -114,7 +94,6 @@ void main()
 			cout << "Error: recv() failed with code " << WSAGetLastError() << endl;
 			closesocket(ClientSocket);
 			closesocket(ListenSocket);
-			freeaddrinfo(result);
 			WSACleanup();
 			return;
 		}
