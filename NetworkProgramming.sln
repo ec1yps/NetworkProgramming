@@ -6,6 +6,9 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "IPcalc", "IPcalc\IPcalc.vcxproj", "{F33EB524-D158-4350-A14D-23D64F4BFEA0}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "WinSockServer", "WinSockServer\WinSockServer.vcxproj", "{356505F7-F65F-453C-8CA6-0860139C655C}"
+	ProjectSection(ProjectDependencies) = postProject
+		{B40B6C4D-E78D-49C7-8A29-89FF610D444E} = {B40B6C4D-E78D-49C7-8A29-89FF610D444E}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "WinSockClient", "WinSockClient\WinSockClient.vcxproj", "{B40B6C4D-E78D-49C7-8A29-89FF610D444E}"
 EndProject
