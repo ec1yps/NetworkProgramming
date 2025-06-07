@@ -59,7 +59,7 @@ void main()
 	}
 
 	// Получение и отправка данных
-	CHAR send_buffer[] = "Hellow Server, I'm client!";
+	CHAR send_buffer[DEFAULT_BUFFER_LENGTH] = "Hellow Server, I'm client!";
 	CHAR recvbuffer[DEFAULT_BUFFER_LENGTH] {};
 	do
 	{
@@ -74,25 +74,18 @@ void main()
 		}
 		cout << iResult << " Bytes sent" << endl;
 
-		//iResult = shutdown(connect_socket, SD_SEND);
-		/*if (iResult == SOCKET_ERROR)
-		{
-			cout << "Shutdown failed" << WSAGetLastError() << endl;
-			closesocket(connect_socket);
-			freeaddrinfo(result);
-			WSACleanup();
-			return;
-		}*/
-
 		// Receive data
 		iResult = recv(connect_socket, recvbuffer, DEFAULT_BUFFER_LENGTH, 0);
-		if (iResult > 0) cout << "Bytes received: " << iResult << "\nMessage: " << recvbuffer << endl;
+		if (iResult > 0) cout << "Bytes received: " << iResult << " | Message: " << recvbuffer << endl;
 		else if (iResult == 0) cout << "Connection closed" << endl;
 		else cout << "Receive failed with code: " << WSAGetLastError() << endl;
 		ZeroMemory(send_buffer, sizeof(send_buffer));
 		ZeroMemory(recvbuffer, sizeof(recvbuffer));
-		cout << "Введите сообщение: "; cin.getline(send_buffer, DEFAULT_BUFFER_LENGTH);
-	} while (iResult > 0);
+		cout << "Введите сообщение: "; 
+		SetConsoleCP(1251);
+		cin.getline(send_buffer, DEFAULT_BUFFER_LENGTH);
+		SetConsoleCP(866);
+	} while (iResult > 0 && strcmp(send_buffer, "Exit"));
 
 	// Disconnect
 	iResult = shutdown(connect_socket, SD_SEND);
