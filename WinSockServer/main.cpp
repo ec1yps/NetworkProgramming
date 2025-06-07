@@ -81,11 +81,41 @@ void main()
 		return;
 	}
 
+	VOID HandleClient(SOCKET ClientSocket);
+	CONST INT MAX_CLIENTS = 5;
+	SOCKET clients[MAX_CLIENTS] = {};
+	DWORD dwThreadIDs[MAX_CLIENTS] = {};
+	HANDLE hThreads[MAX_CLIENTS] = {};
+
+	INT i = 0;
+
+	while (i < MAX_CLIENTS)
+	{
+		SOCKET ClientSocket = accept(ListenSocket, NULL, NULL);
+		//HandleClient(ClientSocket);
+		clients[i] = ClientSocket;
+		hThreads[i] = CreateThread(
+			NULL, 
+			0, 
+			(LPTHREAD_START_ROUTINE)HandleClient, 
+			(LPVOID)clients[i],
+			0, 
+			&dwThreadIDs[i]
+		);
+		i++;
+	}
+	
+	closesocket(ListenSocket);
+	freeaddrinfo(result);
+	WSACleanup();
+}
+
+VOID HandleClient(SOCKET ClientSocket)
+{
 	// Зацикливание Сокета на получение соединений от клиентов
+	INT iResult = 0;
 	CHAR recvbuffer[DEFAULT_BUFFER_LENGTH] = {};
 	int recv_buffer_length = DEFAULT_BUFFER_LENGTH;
-	SOCKET ClientSocket = accept(ListenSocket, NULL, NULL);
-
 	do
 	{
 		ZeroMemory(recvbuffer, sizeof(recvbuffer));
@@ -101,10 +131,10 @@ void main()
 			{
 				cout << "Error: Send failed with code " << WSAGetLastError() << endl;
 				closesocket(ClientSocket);
-				closesocket(ListenSocket);
-				freeaddrinfo(result);
-				WSACleanup();
-				return;
+				//closesocket(ListenSocket);
+				//freeaddrinfo(result);
+				//WSACleanup();
+				//return;
 			}
 			cout << "Bytes sent: " << iSendResult << endl;
 		}
@@ -120,9 +150,4 @@ void main()
 			//return;
 		}
 	} while (iResult > 0);
-	closesocket(ListenSocket);
-	freeaddrinfo(result);
-	WSACleanup();
 }
-
-//VOID HandleClient(SOCKET ClientSocket, )
