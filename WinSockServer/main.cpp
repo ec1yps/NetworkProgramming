@@ -145,7 +145,7 @@ VOID WINAPI HandleClient(SOCKET ClientSocket)
 		iResult = recvfrom(ClientSocket, recvbuffer, recv_buffer_length, 0, (SOCKADDR*)&peer, &address_length);
 		if (iResult > 0)
 		{
-			getpeername(ClientSocket, (sockaddr*)&peer, &address_length);
+			getpeername(ClientSocket, (SOCKADDR*)&peer, &address_length);
 			inet_ntop(AF_INET, &peer.sin_addr, address, INET_ADDRSTRLEN);
 			cout << "Client IP-address: " << address << endl;
 			cout << "Client port: " << ntohs(peer.sin_port) << endl;
