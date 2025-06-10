@@ -131,16 +131,24 @@ void main()
 
 VOID WINAPI HandleClient(SOCKET ClientSocket)
 {
+	SOCKADDR_IN peer;
+	ZeroMemory(&peer, sizeof(peer));
 	// Зацикливание Сокета на получение соединений от клиентов
 	INT iResult = 0;
 	CHAR recvbuffer[DEFAULT_BUFFER_LENGTH] = {};
 	int recv_buffer_length = DEFAULT_BUFFER_LENGTH;
+	CHAR address[16] = {};
+	INT address_length = 16;
 	do
 	{
 		ZeroMemory(recvbuffer, sizeof(recvbuffer));
-		iResult = recv(ClientSocket, recvbuffer, recv_buffer_length, 0);
+		iResult = recvfrom(ClientSocket, recvbuffer, recv_buffer_length, 0, (SOCKADDR*)&peer, &address_length);
 		if (iResult > 0)
 		{
+			getpeername(ClientSocket, (sockaddr*)&peer, &address_length);
+			inet_ntop(AF_INET, &peer.sin_addr, address, INET_ADDRSTRLEN);
+			cout << "Client IP-address: " << address << endl;
+			cout << "Client port: " << ntohs(peer.sin_port) << endl;
 			cout << "Bytes received: " << iResult << endl;
 			cout << "Message: " << recvbuffer << endl;
 			CHAR sz_responce[] = "Hello, I'm Server! Nice to meet you!";
