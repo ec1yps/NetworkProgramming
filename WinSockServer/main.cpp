@@ -17,6 +17,14 @@ using namespace std;
 #define DEFAULT_BUFFER_LENGTH	1500
 #define SZ_SORRY	"Sorry, but all is busy"
 
+VOID HandleClient(SOCKET ClientSocket);
+CONST INT MAX_CLIENTS = 3;
+SOCKET clients[MAX_CLIENTS] = {};
+DWORD dwThreadIDs[MAX_CLIENTS] = {};
+HANDLE hThreads[MAX_CLIENTS] = {};
+
+INT g_connected_clients_count = 0;
+
 void main()
 {
 	setlocale(LC_ALL, "");
@@ -82,30 +90,22 @@ void main()
 		return;
 	}
 
-	VOID HandleClient(SOCKET ClientSocket);
-	CONST INT MAX_CLIENTS = 3;
-	SOCKET clients[MAX_CLIENTS] = {};
-	DWORD dwThreadIDs[MAX_CLIENTS] = {};
-	HANDLE hThreads[MAX_CLIENTS] = {};
-
-	INT i = 0;
-
 	while (true)
 	{
 		SOCKET ClientSocket = accept(ListenSocket, NULL, NULL);
-		if (i < MAX_CLIENTS)
+		if (g_connected_clients_count < MAX_CLIENTS)
 		{
 			//HandleClient(ClientSocket);
-			clients[i] = ClientSocket;
-			hThreads[i] = CreateThread(
+			clients[g_connected_clients_count] = ClientSocket;
+			hThreads[g_connected_clients_count] = CreateThread(
 				NULL,
 				0,
 				(LPTHREAD_START_ROUTINE)HandleClient,
-				(LPVOID)clients[i],
+				(LPVOID)clients[g_connected_clients_count],
 				0,
-				&dwThreadIDs[i]
+				&dwThreadIDs[g_connected_clients_count]
 			);
-			i++;
+			g_connected_clients_count++;
 		}
 		else
 		{
@@ -137,7 +137,7 @@ VOID WINAPI HandleClient(SOCKET ClientSocket)
 	INT iResult = 0;
 	CHAR recvbuffer[DEFAULT_BUFFER_LENGTH] = {};
 	int recv_buffer_length = DEFAULT_BUFFER_LENGTH;
-	CHAR address[16] = {};
+	CHAR address[INET_ADDRSTRLEN] = {};
 	INT address_length = 16;
 	do
 	{
@@ -153,17 +153,20 @@ VOID WINAPI HandleClient(SOCKET ClientSocket)
 			cout << "Message: " << recvbuffer << endl;
 			CHAR sz_responce[] = "Hello, I'm Server! Nice to meet you!";
 			//INT iSendResult = send(ClientSocket, sz_responce, sizeof(sz_responce), 0);
-			INT iSendResult = send(ClientSocket, recvbuffer, strlen(recvbuffer), 0);
-			if (iSendResult == SOCKET_ERROR)
+			for (int i = 0; i < g_connected_clients_count; i++)
 			{
-				cout << "Error: Send failed with code " << WSAGetLastError() << endl;
-				closesocket(ClientSocket);
-				//closesocket(ListenSocket);
-				//freeaddrinfo(result);
-				//WSACleanup();
-				//return;
+				INT iSendResult = send(clients[i], recvbuffer, strlen(recvbuffer), 0);
+				if (iSendResult == SOCKET_ERROR)
+				{
+					cout << "Error: Send failed with code " << WSAGetLastError() << endl;
+					closesocket(ClientSocket);
+					//closesocket(ListenSocket);
+					//freeaddrinfo(result);
+					//WSACleanup();
+					//return;
+				}
 			}
-			cout << "Bytes sent: " << iSendResult << endl;
+			//cout << "Bytes sent: " << iSendResult << endl;
 		}
 		else if (iResult == 0)
 		{
@@ -176,5 +179,6 @@ VOID WINAPI HandleClient(SOCKET ClientSocket)
 			closesocket(ClientSocket);
 			//return;
 		}
+		cout << "======================================================================" << endl;
 	} while (iResult > 0);
 }
